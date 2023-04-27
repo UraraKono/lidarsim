@@ -1,0 +1,4 @@
+numpy==1.24.3
+open3d==0.17.0
+Rtree==1.0.1
+trimesh==3.21.5
