@@ -44,9 +44,9 @@ if __name__ == '__main__':
                 # save pose, initial voxel_grid, and updated voxel_grid to file
                 old_pose.tofile(LOG_DIR+'pose_old_{}.bin'.format(idx))
                 new_pose.tofile(LOG_DIR+'pose_new_{}.bin'.format(idx))
-                point_cloud_old = np.asarray([voxel_grid_old.origin + voxel_resolution + pt.grid_index*voxel_grid_old.voxel_size for pt in voxel_grid_old.get_voxels()])
+                point_cloud_old = np.asarray([voxel_grid_old.origin + voxel_resolution/2.0 + pt.grid_index*voxel_grid_old.voxel_size for pt in voxel_grid_old.get_voxels()])
                 point_cloud_old.tofile(LOG_DIR+'grid_old_{}.bin'.format(idx))
-                point_cloud_new = np.asarray([voxel_grid.origin + voxel_resolution + pt.grid_index*voxel_grid.voxel_size for pt in voxel_grid.get_voxels()])
+                point_cloud_new = np.asarray([voxel_grid.origin + voxel_resolution/2.0 + pt.grid_index*voxel_grid.voxel_size for pt in voxel_grid.get_voxels()])
                 point_cloud_new.tofile(LOG_DIR+'grid_new_{}.bin'.format(idx))
                 idx += 1
     

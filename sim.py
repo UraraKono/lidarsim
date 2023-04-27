@@ -126,10 +126,13 @@ class LidarSim:
     def get_numpy_voxel_grid(self):
         voxel_grid_np = np.zeros((int(self.grid_width/self.voxel_resolution), int(self.grid_width/self.voxel_resolution), int(self.grid_height/self.voxel_resolution)))
         # get voxel centers as points
-        point_cloud_grid = np.asarray([self.voxel_grid.origin + self.voxel_resolution + pt.grid_index*self.voxel_grid.voxel_size for pt in self.voxel_grid.get_voxels()])
+        point_cloud_grid = np.asarray([self.voxel_grid.origin + self.voxel_resolution/2.0 + pt.grid_index*self.voxel_grid.voxel_size for pt in self.voxel_grid.get_voxels()])
         # set occupancy in voxel grid
         for pt in point_cloud_grid:
-            voxel_grid_np[int(pt[0]/self.voxel_resolution), int(pt[2]/self.voxel_resolution), int(pt[1]/self.voxel_resolution)] = 1
+            i = np.min([int(pt[0]/self.voxel_resolution), voxel_grid_np.shape[0]-1])
+            j = np.min([int(pt[1]/self.voxel_resolution), voxel_grid_np.shape[2]-1])
+            k = np.min([int(pt[2]/self.voxel_resolution), voxel_grid_np.shape[1]-1])            
+            voxel_grid_np[i,k,j] = 1
             
         return voxel_grid_np
 
