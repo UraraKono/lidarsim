@@ -31,6 +31,6 @@ if __name__ == '__main__':
             for j in range(grid.shape[1]):
                 for k in range(grid.shape[2]):
                     if grid[i,j,k] == 1:
-                        pcd.points.append(np.array((i * 0.2, k * 0.2, j * 0.2))) # o3d is xzy
+                        pcd.points.append(np.array((i * 0.2 + 0.1, k * 0.2 + 0.1, j * 0.2 + 0.1))) # o3d is xzy
         # visualize point cloud overlayed on voxel grid
         o3d.visualization.draw_geometries([pcd, sim.voxel_grid])
