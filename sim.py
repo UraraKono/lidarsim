@@ -93,7 +93,7 @@ class LidarSim:
         pcd = o3d.geometry.PointCloud()
         if point_cloud.shape[0] > 0:
             if self.voxel_grid is not None:
-                point_cloud_grid = np.asarray([self.voxel_grid.origin + pt.grid_index*self.voxel_grid.voxel_size for pt in self.voxel_grid.get_voxels()])
+                point_cloud_grid = np.asarray([self.voxel_grid.origin + self.voxel_resolution/2.0 + pt.grid_index*self.voxel_grid.voxel_size for pt in self.voxel_grid.get_voxels()])
                 pcd.points = o3d.utility.Vector3dVector(np.concatenate((point_cloud_grid, point_cloud), axis=0))
             else:
                 pcd.points = o3d.utility.Vector3dVector(point_cloud)
