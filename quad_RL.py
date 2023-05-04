@@ -3,7 +3,7 @@ from gym import Env
 from gym.spaces import Box, Discrete
 import random
 from sim import LidarSim
-import quad_env
+import quad_env #quad_env.py
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
@@ -17,7 +17,6 @@ grid_height = 20  # m
 voxel_resolution = 0.2  # m
 sim = LidarSim(grid_width, grid_height, voxel_resolution, h_res=90, v_res=45, h_fov_deg=360, v_fov_deg=45)
 scene = sim.create_scene(num_cylinders=10, create_ground=True)
-
 
 #make the environment and validate it
 env = quad_env.QuadEnv(sim)
@@ -33,10 +32,15 @@ model.save("quad_RL")
 
 obs = env.reset()
 
+step = 0
 while True:
     action, _states = model.predict(obs)
+    print("Step {}".format(step + 1))
+    print("Action: ", action)
     obs, rewards, dones, info = env.step(action)
+    print('obs=', obs, 'reward=', rewards, 'done=', dones)
     #env.render()
+    step += 1
 
 #evaluate the model
 obs = env.reset()

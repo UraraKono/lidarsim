@@ -10,9 +10,9 @@ import open3d as o3d
 class QuadEnv(Env):
     def __init__(self, sim, num_cyl = 10):
         self.action_space = Discrete(9)
-        self.observation_space = Box(low=np.array([0]*3), high=np.array([100]*3)) # will need to edit later - value between 0 and 100
-        self.state_x = random.randint(0, 500) #initial x (width/voxel grid)
-        self.state_y = random.randint(0, 500) #intial y (length/voxel grid)
+        self.observation_space = Box(low=np.array([0]*3), high=np.array([int(sim.grid_width/sim.voxel_resolution)]*3)) # will need to edit later - value between 0 and 100
+        self.state_x = random.randint(0, int(sim.grid_width/sim.voxel_resolution)) #initial x width index
+        self.state_y = random.randint(0, int(sim.grid_width/sim.voxel_resolution)) #intial y height index
         self.state_z = 10 #initial z meters above ground
         self.length = 100 #max # of timesteps
         self.sim = sim
@@ -22,6 +22,10 @@ class QuadEnv(Env):
         global_voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(sim.get_scene(), voxel_size=0.2) #converts scene from o3d mesh to voxel grid
         voxels = global_voxel_grid.get_voxels()  # list of voxels in the grid
         occupied_indices = np.stack(list(vx.grid_index for vx in voxels)) # numpy array of occupied voxels
+
+        # print('global_voxel_grid',global_voxel_grid)
+        # print('voxels',voxels)
+        print('occupied_indices',occupied_indices)
 
     def step(self, action, eps = 0):
         voxel_grid_old = self.sim.get_o3d_voxel_grid()
@@ -43,19 +47,23 @@ class QuadEnv(Env):
         if action > 6 or action == 1:
             self.state_x -= 1
 
+        self.state = np.array([self.state_x, self.state_y, self.state_z]).astype(np.float32)
+
         #simulate step in sim to get observation
         self.sim.simulate_step(np.array([self.state_x, self.state_y, self.state_z]))
         voxel_grid = self.sim.get_o3d_voxel_grid()
-        # based on the action and the observation, we get the reward
+        print('voxel_grid',voxel_grid) # None!!!!
 
         #update time steps remaining
         self.length -= 1
 
         #TODO - update reward
+        info_gain = voxel_grid.get_voxels().shape[0] - voxel_grid_old.get_voxels().shape[0]
+        action_cost = 1
         # If the current state is in occupied voxel grid, reward = -100
         # If we cover the 90% of the entire map, reward = 1000
         # We have reward 
-        reward = 0
+        reward = info_gain / action_cost
 
         #update done state
         if self.length <= 0:
@@ -72,12 +80,16 @@ class QuadEnv(Env):
         return self.state, reward, done, info
 
     def reset(self):
-        self.state_x = random.randint(0, 500) #initial x (width/voxel grid)
-        self.state_y = random.randint(0, 500) #intial y (length/voxel grid)
+        self.state_x = random.randint(0, int(self.sim.grid_width/self.sim.voxel_resolution)) #initial x (width/voxel grid)
+        self.state_y = random.randint(0, int(self.sim.grid_width/self.sim.voxel_resolution)) #intial y (length/voxel grid)
         self.state_z = 10  # initial z meters above ground
         self.length = 60
         self.scene = self.sim.create_scene(num_cylinders=10)
         # TODO - ground truth voxel grid
+
+        # return the observation
+        self.state = np.array([self.state_x, self.state_y, self.state_z]).astype(np.float32)
+
         return self.state
 
 
