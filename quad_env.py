@@ -2,13 +2,13 @@ import numpy as np
 from gym import Env
 from gym.spaces import Box, Discrete
 import random
-import open3d as o3d
 from sim import LidarSim
+import open3d as o3d
 
 #tutorial: https://colab.research.google.com/drive/1oBe07b28h9GCBy_bKtLJisC98mayDcwn?usp=sharing#scrollTo=ns6duy9JDP3S
 
 class QuadEnv(Env):
-    def __init__(self, sim):
+    def __init__(self, sim, num_cyl = 10):
         self.action_space = Discrete(9)
         self.observation_space = Box(low=np.array([0]*3), high=np.array([100]*3)) # will need to edit later - value between 0 and 100
         self.state_x = random.randint(0, 500) #initial x (width/voxel grid)
@@ -16,17 +16,17 @@ class QuadEnv(Env):
         self.state_z = 10 #initial z meters above ground
         self.length = 100 #max # of timesteps
         self.sim = sim
-        self.scene = sim.create_scene(num_cylinders=10)
+        self.scene = sim.create_scene(num_cylinders=num_cyl)
 
-        global_voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(sim.get_scene(),voxel_size=0.2)  # converts scene from o3d mesh to voxel grid
+        #TODO - ground truth occupied voxel grid
+        global_voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(sim.get_scene(), voxel_size=0.2) #converts scene from o3d mesh to voxel grid
         voxels = global_voxel_grid.get_voxels()  # list of voxels in the grid
-        occupied_indices = np.stack(list(vx.grid_index for vx in voxels))  # numpy array of occupied voxels
-        #TODO - ground truth voxel grid
+        occupied_indices = np.stack(list(vx.grid_index for vx in voxels)) # numpy array of occupied voxels
 
     def step(self, action, eps = 0):
         voxel_grid_old = self.sim.get_o3d_voxel_grid()
 
-        #epsilon learning
+        #epsilon-greedy learning
         if eps > random.random():
             action = self.action_space.sample()
         else:
@@ -43,16 +43,19 @@ class QuadEnv(Env):
         if action > 6 or action == 1:
             self.state_x -= 1
 
-        #simulate step in sim
+        #simulate step in sim to get observation
         self.sim.simulate_step(np.array([self.state_x, self.state_y, self.state_z]))
         voxel_grid = self.sim.get_o3d_voxel_grid()
+        # based on the action and the observation, we get the reward
 
         #update time steps remaining
         self.length -= 1
 
         #TODO - update reward
+        # If the current state is in occupied voxel grid, reward = -100
+        # If we cover the 90% of the entire map, reward = 1000
+        # We have reward 
         reward = 0
-
 
         #update done state
         if self.length <= 0:
@@ -61,6 +64,7 @@ class QuadEnv(Env):
             done = False
 
         #TODO - condition when voxel grid is 90% mapped
+        # We have ground truth voxel grid, so we can compare the two
 
         info = {}
 
