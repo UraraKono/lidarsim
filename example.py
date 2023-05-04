@@ -24,6 +24,7 @@ if __name__ == '__main__':
         
         # get numpy voxel grid
         grid = sim.get_numpy_voxel_grid()
+        print('grid in example.py',grid)
         
         # visualize numpy voxel grid overlayed on o3d voxel grid
         pcd = o3d.geometry.PointCloud()

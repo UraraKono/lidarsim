@@ -18,6 +18,8 @@ class QuadEnv(Env):
         self.sim = sim
         self.scene = sim.create_scene(num_cylinders=num_cyl)
 
+        random.seed(2)
+
         #TODO - ground truth occupied voxel grid
         global_voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(sim.get_scene(), voxel_size=0.2) #converts scene from o3d mesh to voxel grid
         voxels = global_voxel_grid.get_voxels()  # list of voxels in the grid
@@ -25,10 +27,15 @@ class QuadEnv(Env):
 
         # print('global_voxel_grid',global_voxel_grid)
         # print('voxels',voxels)
-        print('occupied_indices',occupied_indices)
+        # print('occupied_indices',occupied_indices)
 
     def step(self, action, eps = 0):
+        if self.length  == 100:
+            self.sim.simulate_step(np.array([self.state_x, self.state_y, self.state_z]))
         voxel_grid_old = self.sim.get_o3d_voxel_grid()
+        # grid_old = self.sim.get_numpy_voxel_grid()
+        print('voxel_grid_old',voxel_grid_old)
+        # print('grid_old',grid_old)
 
         #epsilon-greedy learning
         if eps > random.random():
@@ -51,14 +58,18 @@ class QuadEnv(Env):
 
         #simulate step in sim to get observation
         self.sim.simulate_step(np.array([self.state_x, self.state_y, self.state_z]))
+        # Get the voxel grid given the new observation
+        # grid = self.sim.get_numpy_voxel_grid() # numpy 3d array of 0 or 1 for each voxel
         voxel_grid = self.sim.get_o3d_voxel_grid()
-        print('voxel_grid',voxel_grid) # None!!!!
+        # print('voxel_grid',voxel_grid) # None!!!! Why is it none? 
+        print('grid',grid) 
 
         #update time steps remaining
         self.length -= 1
 
         #TODO - update reward
-        info_gain = voxel_grid.get_voxels().shape[0] - voxel_grid_old.get_voxels().shape[0]
+        # info gain = # of newly observed voxels
+        info_gain = np.sum(grid) - np.sum(grid_old==grid)
         action_cost = 1
         # If the current state is in occupied voxel grid, reward = -100
         # If we cover the 90% of the entire map, reward = 1000
