@@ -11,12 +11,20 @@ from stable_baselines3.common.env_util import make_vec_env
 #ppo tutorial: https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html
 #custom environments tutorial: https://colab.research.google.com/github/araffin/rl-tutorial-jnrr19/blob/master/5_custom_gym_env.ipynb#scrollTo=PQfLBE28SNDr
 
+# initialize lidar simulator
+grid_width = 100  # m
+grid_height = 20  # m
+voxel_resolution = 0.2  # m
+sim = LidarSim(grid_width, grid_height, voxel_resolution, h_res=90, v_res=45, h_fov_deg=360, v_fov_deg=45)
+scene = sim.create_scene(num_cylinders=10, create_ground=True)
+
+
 #make the environment and validate it
-env = quad_env.QuadEnv()
+env = quad_env.QuadEnv(sim)
 check_env(env, warn=True)
 
 #vectorize the environment
-env = make_vec_env(lambda: env, n_envs=4).learn(5000)
+env = make_vec_env(lambda: env, n_envs=4)
 
 #train the model w/PPO
 model = PPO("MlpPolicy", env, verbose=1)
