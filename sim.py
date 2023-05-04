@@ -48,6 +48,9 @@ class LidarSim:
     def simulate_lidar(self, pose):
         if self.scene is None:
             raise Exception("Scene not initialized")
+        
+        if pose[0]>self.grid_width or pose[2]>self.grid_width:
+            raise Exception("Pose out of bounds")
             
         origin = pose[:3]
         mesh = trimesh.Trimesh(vertices=np.asarray(self.scene.vertices), faces=np.asarray(self.scene.triangles))
@@ -72,12 +75,15 @@ class LidarSim:
                 ray_directions = np.array([direction])
                 locations, index_ray, index_tri = rmi.intersects_location(ray_origins=ray_origins, ray_directions=ray_directions, multiple_hits=False)
 
-                # if len(locations) > 0 and np.linalg.norm(locations[0] - origin) < 15.0:
-                #     point_cloud.append(locations[0])
+                if len(locations) > 0 and np.linalg.norm(locations[0] - origin) < 15.0:
+                # if len(locations) > 0:    
+                    point_cloud.append(locations[0])
+                    # print('locations',locations)
 
-                point_cloud.append(locations)
+                # point_cloud.append(locations)
+                
         point_cloud = np.array(point_cloud)
-        print('point cloud appended',point_cloud)
+        # print('point cloud appended',point_cloud)
         
         return np.array(point_cloud)
 

@@ -11,14 +11,14 @@ class QuadEnv(Env):
     def __init__(self, sim, num_cyl = 10):
         self.action_space = Discrete(9)
         self.observation_space = Box(low=np.array([0]*3), high=np.array([int(sim.grid_width/sim.voxel_resolution)]*3)) # will need to edit later - value between 0 and 100
-        self.state_x = random.randint(0, int(sim.grid_width/sim.voxel_resolution)) #initial x width index
-        self.state_y = random.randint(0, int(sim.grid_width/sim.voxel_resolution)) #intial y height index
+        self.state_x = random.randint(0, sim.grid_width) #initial x width index
+        self.state_y = random.randint(0, sim.grid_width) #intial y height index
         self.state_z = 10 #initial z meters above ground
         self.length = 100 #max # of timesteps
         self.sim = sim
         self.scene = sim.create_scene(num_cylinders=num_cyl)
 
-        random.seed(2)
+        random.seed(0)
 
         #TODO - ground truth occupied voxel grid
         global_voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(sim.get_scene(), voxel_size=0.2) #converts scene from o3d mesh to voxel grid
@@ -91,8 +91,8 @@ class QuadEnv(Env):
         return self.state, reward, done, info
 
     def reset(self):
-        self.state_x = random.randint(0, int(self.sim.grid_width/self.sim.voxel_resolution)) #initial x (width/voxel grid)
-        self.state_y = random.randint(0, int(self.sim.grid_width/self.sim.voxel_resolution)) #intial y (length/voxel grid)
+        self.state_x = random.randint(0, self.sim.grid_width) #initial x width index
+        self.state_y = random.randint(0, self.sim.grid_width) #intial y height index
         self.state_z = 10  # initial z meters above ground
         self.length = 60
         self.scene = self.sim.create_scene(num_cylinders=10)
