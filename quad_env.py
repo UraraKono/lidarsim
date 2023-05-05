@@ -10,13 +10,19 @@ import open3d as o3d
 class QuadEnv(Env):
     def __init__(self, sim, num_cyl = 10):
         self.action_space = Discrete(9)
-        self.observation_space = Box(low=np.array([0]*3), high=np.array([int(sim.grid_width/sim.voxel_resolution)]*3)) # will need to edit later - value between 0 and 100
-        self.state_x = random.randint(0, int(sim.grid_width)) #initial x width index
-        self.state_y = random.randint(0, int(sim.grid_width)) #intial y height index
+        self.observation_space = Box(low=np.array([0]*3), high=np.array([100/0.02]*3)) # will need to edit later - value between 0 and 100
+        self.state_x = random.randint(0, 100) #initial x width index
+        self.state_y = random.randint(0, 100) #intial y height index
         self.state_z = 2 #initial z meters above ground
-        self.length = 60 #max # of timesteps
-        self.sim = sim
-        self.scene = sim.create_scene(num_cylinders=num_cyl)
+        self.length = 10 #max # of timesteps
+        self.sim = None
+
+        self.occupied_indices = None
+        self.found_voxels = None
+
+        self.grid_width = 100 # 100 meters
+        self.grid_height = 20 # 20 meters
+        #self.scene = sim.create_scene(num_cylinders=num_cyl)
 
         random.seed(1)
 
@@ -30,10 +36,12 @@ class QuadEnv(Env):
         return np.array([self.state_x, self.state_z, self.state_y])
 
     def step(self, action, eps = 0):
+        reward = 0
         # print('length',self.length)
-        print('t_remain',self.t_remain)
+        #print('t_remain',self.t_remain)
+        print(self.t_remain)
         if self.t_remain == self.length:
-            print('initialize self.voxel_grid')
+        #   print('initialize self.voxel_grid')
             self.sim.simulate_step(self.get_pose())
         voxel_grid_old = self.sim.get_o3d_voxel_grid()
         voxel_grid_old_list = voxel_grid_old.get_voxels()
@@ -70,8 +78,20 @@ class QuadEnv(Env):
         # grid = self.sim.get_numpy_voxel_grid() # numpy 3d array of 0 or 1 for each voxel
         voxel_grid = self.sim.get_o3d_voxel_grid()
         voxel_grid_list = voxel_grid.get_voxels()
+
+        prev_points = self.found_voxels.shape[0]
+
+        #print(self.found_voxels.shape)
+        #print(np.stack(list(vx.grid_index for vx in voxel_grid_list)).shape)
+
+        self.found_voxels = np.vstack((self.found_voxels, np.stack(list(vx.grid_index for vx in voxel_grid_list))))
+        self.found_voxels = np.unique(self.found_voxels, axis=0)
         # print('voxel_grid',voxel_grid) # None!!!! Why is it none? 
         # print('grid',grid) 
+        
+        curr_points = self.found_voxels.shape[0]
+        print(curr_points)
+        print(prev_points)
 
         #update time steps remaining
         self.t_remain -= 1
@@ -79,13 +99,14 @@ class QuadEnv(Env):
         #TODO - update reward
 
         # number of points that are in both the old and new voxel grid
-        points_old_now_count = 0
-        for point in voxel_grid_old_list:
-            if point in voxel_grid_list:
-                points_old_now_count += 1
+        # points_old_now_count = 0
+        # for point in voxel_grid_old_list:
+        #     if point in voxel_grid_list:
+        #         points_old_now_count += 1
 
         # info gain = # of newly observed voxels
-        info_gain = len(voxel_grid_list) - points_old_now_count
+        #info_gain = len(voxel_grid_list) - points_old_now_count
+        info_gain = curr_points - prev_points
         self.n_observed_voxels += info_gain
         action_cost = 1
 
@@ -103,36 +124,48 @@ class QuadEnv(Env):
 
         #TODO - condition when voxel grid is 10% mapped
         # We have ground truth voxel grid, so we can compare the two
-        if self.n_observed_voxels / self.total_voxels >= 0.1:
+        if self.n_observed_voxels / self.total_voxels >= 0.9:
             done = True
-            print('Covered 10% of the map!')
+            #print('Covered 10% of the map!')
 
         info = {}
+
+        print('reward: ', reward)
 
         # Return step information
         return self.get_pose().astype(np.float32), reward, done, info
 
     def reset(self):
-        self.state_x = random.randint(0, int(self.sim.grid_width)) #initial x width index
-        self.state_y = random.randint(0, int(self.sim.grid_width)) #intial y height index
+        self.state_x = random.randint(0, 100) #initial x width index
+        self.state_y = random.randint(0, 100) #intial y height index
         self.state_z = 2  # initial z meters above ground
-        self.length = 5
+        self.length = 10
         self.t_remain = self.length
+
+        #creats a new scene every time
+        self.sim = LidarSim(100, 20, voxel_resolution=0.2, h_res=90, v_res=45, h_fov_deg=360, v_fov_deg=45)
         self.scene = self.sim.create_scene(num_cylinders=10)
 
         #ground truth occupied voxel grid
         global_voxel_grid = o3d.geometry.VoxelGrid.create_from_triangle_mesh(self.sim.get_scene(), voxel_size=0.2) #converts scene from o3d mesh to voxel grid
-        voxels = global_voxel_grid.get_voxels()  # list of voxels in the grid
-        # occupied_indices = np.stack(list(vx.grid_index for vx in voxels)) # numpy array of occupied voxels
+        voxels = global_voxel_grid.get_voxels()  # list of voxels in the grid #properly resetting
+
+        #ground truth
+        self.occupied_indices = np.stack(list(vx.grid_index for vx in voxels)) # numpy array of occupied voxels
+        print(type(self.occupied_indices))
+        #current map
+        self.found_voxels = np.zeros((1, 3)) #[0, 0, 0] will always be 'found'
         self.total_voxels = len(voxels) #total number of occupied voxels in the ground truth
         self.n_observed_voxels = 0 #number of observed voxels
 
         # print(global_voxel_grid) # VoxelGrid with 34038 voxels.
         # print('total voxels',self.total_voxels) # total voxels 34038
         # print('occupied_indices',occupied_indices)
+        print("RESET")
 
         # return the observation
         return self.get_pose().astype(np.float32)
 
 
 
+    #TODO - render model

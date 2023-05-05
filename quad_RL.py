@@ -20,27 +20,44 @@ scene = sim.create_scene(num_cylinders=10, create_ground=True)
 
 #make the environment and validate it
 env = quad_env.QuadEnv(sim)
-check_env(env, warn=True)
+#check_env(env, warn=True)
+print('test')
 
 #vectorize the environment
 env = make_vec_env(lambda: env, n_envs=1)
+print("make env")
 
 #train the model w/PPO
 model = PPO("MlpPolicy", env, verbose=1) #The code keeps running here and never moves onto actually training the model, model.learn()
-model.learn(total_timesteps=1)
+print('on to learning')
+model.learn(total_timesteps=5) #learns the model
 model.save("quad_RL")
 
+
 obs = env.reset()
+# step = 0
+# while True:
+#     action, _states = model.predict(obs)
+#     print("Step {}".format(step + 1))
+#     print("Action: ", action)
+#     obs, rewards, dones, info = env.step(action)
+#     print('obs=', obs, 'reward=', rewards, 'done=', dones)
+#     #env.render()
+#     step += 1
 
 step = 0
-while True:
-    action, _states = model.predict(obs)
-    print("Step {}".format(step + 1))
-    print("Action: ", action)
-    obs, rewards, dones, info = env.step(action)
-    print('obs=', obs, 'reward=', rewards, 'done=', dones)
-    #env.render()
-    step += 1
+#visualizes the trained agent
+for i in range(1000):
+  print(i)
+  action, _state = model.predict(obs)
+  print('action', action)
+  obs, reward, done, info = env.step(action)
+  if i == 999:
+    env.render()
+  step += 1
+  #env.render()
+
+
 
 #evaluate the model
 obs = env.reset()

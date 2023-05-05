@@ -86,7 +86,7 @@ class LidarSim:
 
     def simulate_step(self, pose):
         # print('simulate step')
-        print('pose',pose)
+        #print('pose',pose)
         # Generate a point cloud simulating a lidar sensor and update the voxel grid
         start_time = time.time()
         # get new point cloud
