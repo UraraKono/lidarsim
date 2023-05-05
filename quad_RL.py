@@ -52,6 +52,9 @@ for i in range(1000):
   action, _state = model.predict(obs)
   print('action', action)
   obs, reward, done, info = env.step(action)
+  if done:
+    env.render()  
+    break
   if i == 999:
     env.render()
   step += 1

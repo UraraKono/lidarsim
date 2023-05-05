@@ -124,11 +124,13 @@ class QuadEnv(Env):
 
         #TODO - condition when voxel grid is 30% mapped
         # We have ground truth voxel grid, so we can compare the two
-        if self.n_observed_voxels / self.total_voxels >= 0.1:
+        if self.n_observed_voxels / self.total_voxels >= 0.9:
             done = True
-            print('Covered 10% of the map!')
+            print('Covered 90% of the map!')
+            info = {'Time' : self.t_remain}
 
-        info = {}
+        info = {'Time' : self.t_remain, 'Done': done, 'Info Gain': info_gain, 'Reward': reward, \
+                'Action': action, 'State x': self.state_x, 'State y': self.state_y}
 
         print('reward: ', reward)
 
@@ -170,6 +172,9 @@ class QuadEnv(Env):
         # return the observation
         return self.get_pose().astype(np.float32)
 
-
-
     #TODO - render model
+    def render(self):
+        print(self.found_voxels)
+        print(self.occupied_indices)
+        #print ground truth voxels
+        #print found voxels
