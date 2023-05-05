@@ -108,12 +108,12 @@ class QuadEnv(Env):
         #info_gain = len(voxel_grid_list) - points_old_now_count
         info_gain = curr_points - prev_points
         self.n_observed_voxels += info_gain
-        action_cost = 1
 
         # TODO
-        # If the current state is in occupied voxel grid, reward = -100
-        # If we cover the 90% of the entire map, reward = 1000
+        # If the current state is in occupied voxel grid, action cost = 100
+        # If we cover the 90% of the entire map, action cost = 0.01
         # We have reward 
+        action_cost = 1
         reward = info_gain / action_cost
 
         #update done state
@@ -122,11 +122,11 @@ class QuadEnv(Env):
         else:
             done = False
 
-        #TODO - condition when voxel grid is 10% mapped
+        #TODO - condition when voxel grid is 30% mapped
         # We have ground truth voxel grid, so we can compare the two
-        if self.n_observed_voxels / self.total_voxels >= 0.9:
+        if self.n_observed_voxels / self.total_voxels >= 0.1:
             done = True
-            #print('Covered 10% of the map!')
+            print('Covered 10% of the map!')
 
         info = {}
 
@@ -157,6 +157,10 @@ class QuadEnv(Env):
         self.found_voxels = np.zeros((1, 3)) #[0, 0, 0] will always be 'found'
         self.total_voxels = len(voxels) #total number of occupied voxels in the ground truth
         self.n_observed_voxels = 0 #number of observed voxels
+
+        # TODO - ground truth occupied voxel grid on cylinders
+        self.scene_cylinders = self.sim.create_scene(num_cylinders=10, create_ground=False)
+
 
         # print(global_voxel_grid) # VoxelGrid with 34038 voxels.
         # print('total voxels',self.total_voxels) # total voxels 34038
