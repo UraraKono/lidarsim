@@ -14,8 +14,9 @@ class QuadEnv(Env):
         self.state_x = random.randint(0, 100) #initial x width index
         self.state_y = random.randint(0, 100) #intial y height index
         self.state_z = 2 #initial z meters above ground
-        self.length = 10 #max # of timesteps
+        self.length = 20 #max # of timesteps
         self.sim = None
+        self.sum_reward = 0
 
         self.occupied_indices = None
         self.found_voxels = None
@@ -115,6 +116,7 @@ class QuadEnv(Env):
         # We have reward 
         action_cost = 1
         reward = info_gain / action_cost
+        self.sum_reward += reward
 
         #update done state
         if self.t_remain <= 0:
@@ -130,7 +132,7 @@ class QuadEnv(Env):
             info = {'Time' : self.t_remain}
 
         info = {'Time' : self.t_remain, 'Done': done, 'Info Gain': info_gain, 'Reward': reward, \
-                'Action': action, 'State x': self.state_x, 'State y': self.state_y}
+                'Action': action, 'State x': self.state_x, 'State y': self.state_y, 'Sum Reward': self.sum_reward}
 
         print('reward: ', reward)
 
@@ -143,6 +145,7 @@ class QuadEnv(Env):
         self.state_z = 2  # initial z meters above ground
         self.length = 10
         self.t_remain = self.length
+        self.sum_reward = 0
 
         #creats a new scene every time
         self.sim = LidarSim(100, 20, voxel_resolution=0.2, h_res=90, v_res=45, h_fov_deg=360, v_fov_deg=45)

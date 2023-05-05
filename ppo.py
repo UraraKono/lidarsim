@@ -217,11 +217,14 @@ if __name__ == "__main__":
             next_obs, next_done = torch.Tensor(next_obs).to(device), torch.Tensor(done).to(device)
 
             for item in info:
-                if "episode" in item.keys():
-                    print(f"global_step={global_step}, episodic_return={item['episode']['r']}")
-                    writer.add_scalar("charts/episodic_return", item["episode"]["r"], global_step)
-                    writer.add_scalar("charts/episodic_length", item["episode"]["l"], global_step)
+                if item["Done"]:
+                    writer.add_scalar("charts/episodic_return", item["Sum Reward"], global_step)
                     break
+                # if "episode" in item.keys():
+                #     print(f"global_step={global_step}, episodic_return={item['episode']['r']}")
+                #     writer.add_scalar("charts/episodic_return", item["episode"]["r"], global_step)
+                #     writer.add_scalar("charts/episodic_length", item["episode"]["l"], global_step)
+                #     break
 
         # bootstrap value if not done
         with torch.no_grad():
