@@ -49,8 +49,8 @@ class LidarSim:
         if self.scene is None:
             raise Exception("Scene not initialized")
         
-        if pose[0]>self.grid_width or pose[2]>self.grid_width:
-            raise Exception("Pose out of bounds")
+        if pose[0]>self.grid_width or pose[2]>self.grid_width or pose[1] > self.grid_height:
+            raise Exception("Pose out of bounds. Pose: xzy")
             
         origin = pose[:3]
         mesh = trimesh.Trimesh(vertices=np.asarray(self.scene.vertices), faces=np.asarray(self.scene.triangles))
@@ -75,45 +75,36 @@ class LidarSim:
                 ray_directions = np.array([direction])
                 locations, index_ray, index_tri = rmi.intersects_location(ray_origins=ray_origins, ray_directions=ray_directions, multiple_hits=False)
 
-                if len(locations) > 0 and np.linalg.norm(locations[0] - origin) < 15.0:
-                # if len(locations) > 0:    
+                if len(locations) > 0 and np.linalg.norm(locations[0] - origin) < 15.0:   
                     point_cloud.append(locations[0])
                     # print('locations',locations)
-
-                # point_cloud.append(locations)
                 
         point_cloud = np.array(point_cloud)
         # print('point cloud appended',point_cloud)
         
         return np.array(point_cloud)
 
-    def visualize_point_cloud(self, point_cloud):
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(point_cloud)
-
-        o3d.visualization.draw_geometries([pcd])
-
     def simulate_step(self, pose):
-        print('simulate step')
+        # print('simulate step')
         print('pose',pose)
         # Generate a point cloud simulating a lidar sensor and update the voxel grid
         start_time = time.time()
         # get new point cloud
         point_cloud = self.simulate_lidar(pose)
-        print('point cloud shape',point_cloud.shape)
+        # print('point cloud shape',point_cloud.shape)
         # add both grid and new point cloud
         pcd = o3d.geometry.PointCloud()
         if point_cloud.shape[0] > 0:
             if self.voxel_grid is not None:
-                print('voxel grid is not none')
+                # print('simulate step: voxel grid is not none')
                 point_cloud_grid = np.asarray([self.voxel_grid.origin + self.voxel_resolution/2.0 + pt.grid_index*self.voxel_grid.voxel_size for pt in self.voxel_grid.get_voxels()])
                 pcd.points = o3d.utility.Vector3dVector(np.concatenate((point_cloud_grid, point_cloud), axis=0))
             else:
-                print('voxel grid is none')
+                # print('simulate step: voxel grid is none')
                 pcd.points = o3d.utility.Vector3dVector(point_cloud)
             self.point_cloud = pcd
             self.voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pcd, self.voxel_resolution)
-            print('voxel grid',self.voxel_grid)
+            # print('voxel grid',self.voxel_grid)
         
         end_time = time.time()
         if self.verbose:

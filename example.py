@@ -13,7 +13,7 @@ if __name__ == '__main__':
     sim.create_scene(num_cylinders=10, create_ground=True)
 
     for i in range(10):
-        # define the pose in the scene (x, y, z, yaw, pitch, roll)
+        # define the pose in the scene (x, z, y, yaw, pitch, roll)
         pose = np.array([np.random.uniform(0, 100), np.random.uniform(1, 5), np.random.uniform(0, 100), 0, 0, 0])
         
         # simulate a lidar scan and update the voxel grid

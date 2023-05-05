@@ -23,11 +23,11 @@ env = quad_env.QuadEnv(sim)
 check_env(env, warn=True)
 
 #vectorize the environment
-env = make_vec_env(lambda: env, n_envs=4)
+env = make_vec_env(lambda: env, n_envs=1)
 
 #train the model w/PPO
-model = PPO("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=25000)
+model = PPO("MlpPolicy", env, verbose=1) #The code keeps running here and never moves onto actually training the model, model.learn()
+model.learn(total_timesteps=1)
 model.save("quad_RL")
 
 obs = env.reset()
