@@ -45,6 +45,8 @@ if __name__ == '__main__':
             sim.simulate_step(new_pose)
             voxel_grid = sim.get_o3d_voxel_grid()
 
+            old_pose = new_pose
+            
             # sim.visualize(False, True, False) # point cloud, voxel grid, scene
 
             if voxel_grid_old is not None:
