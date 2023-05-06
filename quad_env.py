@@ -40,7 +40,7 @@ class QuadEnv(Env):
         reward = 0
         # print('length',self.length)
         #print('t_remain',self.t_remain)
-        print(self.t_remain)
+        #print(self.t_remain)
         if self.t_remain == self.length:
         #   print('initialize self.voxel_grid')
             self.sim.simulate_step(self.get_pose())
@@ -91,8 +91,8 @@ class QuadEnv(Env):
         # print('grid',grid) 
         
         curr_points = self.found_voxels.shape[0]
-        print(curr_points)
-        print(prev_points)
+        # print(curr_points)
+        # print(prev_points)
 
         #update time steps remaining
         self.t_remain -= 1
@@ -128,13 +128,13 @@ class QuadEnv(Env):
         # We have ground truth voxel grid, so we can compare the two
         if self.n_observed_voxels / self.total_voxels >= 0.9:
             done = True
+            print(self.t_remain)
             print('Covered 90% of the map!')
-            info = {'Time' : self.t_remain}
 
         info = {'Time' : self.t_remain, 'Done': done, 'Info Gain': info_gain, 'Reward': reward, \
                 'Action': action, 'State x': self.state_x, 'State y': self.state_y, 'Sum Reward': self.sum_reward}
 
-        print('reward: ', reward)
+        #print('reward: ', reward)
 
         # Return step information
         return self.get_pose().astype(np.float32), reward, done, info
@@ -143,7 +143,7 @@ class QuadEnv(Env):
         self.state_x = random.randint(0, 100) #initial x width index
         self.state_y = random.randint(0, 100) #intial y height index
         self.state_z = 2  # initial z meters above ground
-        self.length = 10
+        self.length = 20
         self.t_remain = self.length
         self.sum_reward = 0
 
@@ -157,7 +157,7 @@ class QuadEnv(Env):
 
         #ground truth
         self.occupied_indices = np.stack(list(vx.grid_index for vx in voxels)) # numpy array of occupied voxels
-        print(type(self.occupied_indices))
+        #print(type(self.occupied_indices))
         #current map
         self.found_voxels = np.zeros((1, 3)) #[0, 0, 0] will always be 'found'
         self.total_voxels = len(voxels) #total number of occupied voxels in the ground truth
