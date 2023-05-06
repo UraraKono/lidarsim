@@ -1,0 +1,96 @@
+import numpy as np
+import open3d as o3d
+from sim import LidarSim
+
+if __name__ == '__main__':
+    voxel_resolution = 0.2
+    grid_width = 100
+    grid_size = int(grid_width / voxel_resolution)
+
+    for idx in range(200):
+        # Get numpy voxel grid
+        # grid = np.fromfile('logs/test/grid_old_{}.bin'.format(idx), dtype=np.float32).reshape(-1, 3)
+        grid = np.fromfile('logs_new/test/grid_new_{}.bin'.format(idx), dtype=np.float32).reshape(-1, 3)
+        # print('Shape', grid.shape)
+        # print('Max', grid.max(axis=0))
+        Z = np.zeros((grid_size, grid_size, 4))
+        # Compute z_max, z_min, z_avg, count for each x and y
+        for i in range(grid.shape[0]):
+            # Data is xzy
+            a = min(int(grid[i, 0] / voxel_resolution), grid_size - 1)
+            b = min(int(grid[i, 2] / voxel_resolution), grid_size - 1)
+            if (Z[a, b, 3] == 0):
+                Z[a, b, :3] = grid[i, 1]
+                Z[a, b, 3] = 1
+            else:
+                # Get values from Z[a, b]
+                z_max, z_min, z_avg, count = Z[a, b]
+                z_current = grid[i, 1]
+                if z_current < 0.05:
+                    z_current = 0
+                # Update values
+                z_max = max(z_max, z_current)
+                z_min = min(z_min, z_current)
+                z_avg = (z_avg * count + z_current) / (count + 1)
+                count += 1
+                # Update Z[a, b]
+                Z[a, b] = np.array([z_max, z_min, z_avg, count])
+        
+        # Z[:,:,:3].astype('float32').tofile('logs/test/x/x_{}.bin'.format(idx))
+        Z[:,:,:3].astype('float32').tofile('logs_new/test/y/y_{}.bin'.format(idx))
+        print('Saved y_{}.bin'.format(idx))
+        # Z_read = np.fromfile('logs/y_0.bin', dtype=np.float32).reshape(1, 500, 500, 3)
+        # print('Shape', Z_read[0, 413, 373])
+
+    # Find all points with z_max > 5
+    for i in range(Z.shape[0]):
+        for j in range(Z.shape[1]):
+            if Z[i, j, 0] > 5:
+                print(i, j, Z[i, j])
+
+    # Visualize point cloud overlayed on o3d voxel grid
+    pcd = o3d.geometry.PointCloud()
+    # for i in range(grid.shape[0]):
+    #      # o3d is xzy
+    #     pcd.points.append(np.array((grid[i][0] * 0.2 + 0.1, grid[i][2] * 0.2 + 0.1, grid[i][1] * 0.2 + 0.1)))
+
+    for i in range(Z.shape[0]):
+        for j in range(Z.shape[1]):
+            pcd.points.append(np.array((i * 0.2 + 0.1, j * 0.2 + 0.1, Z[i,j,0] * 0.2 + 0.1)))
+            pcd.points.append(np.array((i * 0.2 + 0.1, j * 0.2 + 0.1, Z[i,j,1] * 0.2 + 0.1)))
+            pcd.points.append(np.array((i * 0.2 + 0.1, j * 0.2 + 0.1, Z[i,j,2] * 0.2 + 0.1)))
+    o3d.visualization.draw_geometries([pcd])
+    exit(0)
+
+    # init simulator
+    grid_width = 100 # 100 meters
+    grid_height = 20 # 20 meters
+    voxel_resolution = 0.2 # 0.2 meters
+    sim = LidarSim(grid_width, grid_height, voxel_resolution, h_res=90, v_res=45, h_fov_deg=360, v_fov_deg=45)
+    num_steps = 50 # number of actions per env
+
+    # create a scene with random cylinders and ground plane
+    sim.create_scene(num_cylinders=10, create_ground=True)
+
+    for i in range(num_steps):
+        # define the pose in the scene (x, y, z, yaw, pitch, roll)
+        pose = np.array([np.random.uniform(0, 100), np.random.uniform(1, 5), np.random.uniform(0, 100), 0, 0, 0])
+        
+        # simulate a lidar scan and update the voxel grid
+        sim.simulate_step(pose)
+        
+        # visualize voxel grid overlayed on scene
+        sim.visualize(True, False, True) # point cloud, voxel grid, scene
+        
+        # get numpy voxel grid
+        grid = sim.get_numpy_voxel_grid()
+        
+        # visualize numpy voxel grid overlayed on o3d voxel grid
+        pcd = o3d.geometry.PointCloud()
+        for i in range(grid.shape[0]):
+            for j in range(grid.shape[1]):
+                for k in range(grid.shape[2]):
+                    if grid[i,j,k] == 1:
+                        pcd.points.append(np.array((i * 0.2 + 0.1, k * 0.2 + 0.1, j * 0.2 + 0.1))) # o3d is xzy
+        # visualize point cloud overlayed on voxel grid
+        o3d.visualization.draw_geometries([pcd, sim.voxel_grid])

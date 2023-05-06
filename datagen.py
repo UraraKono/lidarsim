@@ -2,7 +2,7 @@ import os
 import numpy as np
 from sim import LidarSim
 
-LOG_DIR = "logs/"
+LOG_DIR = "logs/test/"
 
 if __name__ == '__main__':
     
@@ -12,7 +12,7 @@ if __name__ == '__main__':
     
     # generate data
     num_envs = 10 # total number of environments
-    num_steps = 50 # number of actions per env
+    num_steps = 101 # number of actions per env
     idx = 0
     
     for env_it in range(num_envs):
@@ -50,11 +50,13 @@ if __name__ == '__main__':
             if voxel_grid_old is not None:
                 # skip the first action
                 # save pose, initial voxel_grid, and updated voxel_grid to file
-                old_pose.tofile(LOG_DIR+'pose_old_{}.bin'.format(idx))
-                new_pose.tofile(LOG_DIR+'pose_new_{}.bin'.format(idx))
+                old_pose.astype('float32').tofile(LOG_DIR+'pose_old_{}.bin'.format(idx))
+                print(old_pose, old_pose.shape)
+                new_pose.astype('float32').tofile(LOG_DIR+'pose_new_{}.bin'.format(idx))
                 point_cloud_old = np.asarray([voxel_grid_old.origin + voxel_resolution/2.0 + pt.grid_index*voxel_grid_old.voxel_size for pt in voxel_grid_old.get_voxels()])
-                point_cloud_old.tofile(LOG_DIR+'grid_old_{}.bin'.format(idx))
+                point_cloud_old.astype('float32').tofile(LOG_DIR+'grid_old_{}.bin'.format(idx))
                 point_cloud_new = np.asarray([voxel_grid.origin + voxel_resolution/2.0 + pt.grid_index*voxel_grid.voxel_size for pt in voxel_grid.get_voxels()])
-                point_cloud_new.tofile(LOG_DIR+'grid_new_{}.bin'.format(idx))
+                point_cloud_new.astype('float32').tofile(LOG_DIR+'grid_new_{}.bin'.format(idx))
                 idx += 1
+                print(point_cloud_old.shape, point_cloud_old[0])
     
