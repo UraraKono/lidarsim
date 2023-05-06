@@ -20,7 +20,7 @@ scene = sim.create_scene(num_cylinders=10, create_ground=True)
 
 #make the environment and validate it
 env = quad_env.QuadEnv(sim)
-#check_env(env, warn=True)
+## check_env(env, warn=True) #The code keeps running here
 print('test')
 
 #vectorize the environment
@@ -29,8 +29,7 @@ print("make env")
 
 #train the model w/PPO
 model = PPO("MlpPolicy", env, verbose=1) #The code keeps running here and never moves onto actually training the model, model.learn()
-print('on to learning')
-model.learn(total_timesteps=5) #learns the model
+model.learn(total_timesteps=1)
 model.save("quad_RL")
 
 
